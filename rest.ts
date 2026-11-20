@@ -5,7 +5,6 @@
 import { flattenTree, isObjectId, mergeBase } from './gitobj.ts';
 import {
   VIEWER,
-  analyzeMerge,
   commentView,
   commitView,
   diffTrees,

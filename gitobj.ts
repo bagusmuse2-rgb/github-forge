@@ -594,7 +594,8 @@ export function readPack(store: ObjectStore, pack: Uint8Array, resolveBase?: (oi
   for (const entry of raw) {
     if (entry.typeCode !== 6 && entry.typeCode !== 7) {
       const type = CODE_TYPE[entry.typeCode];
-      resolvedByOid.set(hashObject(type, entry.data), { type, data: entry.data, oid: hashObject(type, entry.data) });
+      const oid = hashObject(type, entry.data);
+      resolvedByOid.set(oid, { type, data: entry.data, oid });
     }
   }
   const resolve = (entry: RawEntry): { type: GitObjectType; data: Buffer; oid: string } => {
@@ -671,28 +672,25 @@ export function writePack(objects: Iterable<GitObject>): Buffer {
  * trees, blobs and tags sorted by oid. Deterministic bytes for a deterministic request sequence.
  */
 export function packObjects(store: ObjectStore, oids: Iterable<string>): Buffer {
-  const commits: GitObject[] = [];
-  const trees: GitObject[] = [];
-  const blobs: GitObject[] = [];
-  const tags: GitObject[] = [];
+  const commits: Array<{ oid: string; object: GitObject }> = [];
+  const trees: Array<{ oid: string; object: GitObject }> = [];
+  const blobs: Array<{ oid: string; object: GitObject }> = [];
+  const tags: Array<{ oid: string; object: GitObject }> = [];
   const seen = new Set<string>();
   for (const oid of oids) {
     if (seen.has(oid)) continue;
     seen.add(oid);
     const object = store.get(oid);
     if (!object) continue;
-    if (object.type === 'commit') commits.push(object);
-    else if (object.type === 'tree') trees.push(object);
-    else if (object.type === 'blob') blobs.push(object);
-    else tags.push(object);
+    const entry = { oid, object };
+    if (object.type === 'commit') commits.push(entry);
+    else if (object.type === 'tree') trees.push(entry);
+    else if (object.type === 'blob') blobs.push(entry);
+    else tags.push(entry);
   }
-  const byOid = (a: GitObject, b: GitObject): number => {
-    const x = hashObject(a.type, a.data);
-    const y = hashObject(b.type, b.data);
-    return x < y ? -1 : x > y ? 1 : 0;
-  };
+  const byOid = (a: { oid: string }, b: { oid: string }): number => (a.oid < b.oid ? -1 : a.oid > b.oid ? 1 : 0);
   trees.sort(byOid);
   blobs.sort(byOid);
   tags.sort(byOid);
-  return writePack([...tags, ...commits, ...trees, ...blobs]);
+  return writePack([...tags, ...commits, ...trees, ...blobs].map((entry) => entry.object));
 }

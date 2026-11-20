@@ -168,8 +168,12 @@ function sidebandPackets(pack: Buffer): Buffer[] {
 /** Compute the object set for a fetch and the shallow boundary to report. */
 function fetchObjects(forge: Forge, args: FetchArgs): { send: Set<string>; boundary: string[]; unshallow: string[] } {
   const excluded = new Set<string>();
-  if (args.haves.length) {
-    for (const oid of collectReachable(forge.store, args.haves, { allowMissing: true })) excluded.add(oid);
+  // A have that is also declared as a shallow boundary is held shallowly: the client has the
+  // commit and its trees, not its ancestors, so its exclusion stops at the boundary.
+  const shallowSet = new Set(args.shallowLines);
+  for (const have of args.haves) {
+    if (shallowSet.has(have)) continue;
+    for (const oid of collectReachable(forge.store, [have], { allowMissing: true })) excluded.add(oid);
   }
   // Objects the client already holds at its shallow boundary: the boundary commits and their trees.
   for (const oid of args.shallowLines) {

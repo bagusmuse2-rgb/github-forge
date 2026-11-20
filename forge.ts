@@ -102,18 +102,6 @@ export interface Repo {
   createdSec: number;
 }
 
-const DEFAULT_LABELS: ReadonlyArray<readonly [string, string, string]> = [
-  ['bug', 'd73a4a', "Something isn't working"],
-  ['documentation', '0075ca', 'Improvements or additions to documentation'],
-  ['duplicate', 'cfd3d7', 'This issue or pull request already exists'],
-  ['enhancement', 'a2eeef', 'New feature or request'],
-  ['good first issue', '7057ff', 'Good for newcomers'],
-  ['help wanted', '008672', 'Extra attention is needed'],
-  ['invalid', 'e4e669', "This doesn't seem right"],
-  ['question', 'd876e3', 'Further information is requested'],
-  ['wontfix', 'ffffff', 'This will not be worked on'],
-];
-
 export class Forge {
   readonly store = new ObjectStore();
   readonly clock = new LogicalClock();
@@ -149,9 +137,8 @@ export class Forge {
       nextSeq: 1,
       createdSec: this.clock.nextSec(),
     };
-    for (const [labelName, color, description] of DEFAULT_LABELS) {
-      repo.labels.set(labelName, { id: ++this.nextLabelId, name: labelName, color, description });
-    }
+    // No labels are seeded: the suite creates the labels it uses and expects 201 for them, and
+    // an issue may only carry a label the repo actually holds.
     this.repos.set(key, repo);
     return repo;
   }

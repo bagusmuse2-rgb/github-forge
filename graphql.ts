@@ -138,7 +138,10 @@ function tokenize(source: string): Array<{ t: string; v: string }> {
 
 class Parser {
   private pos = 0;
-  constructor(private readonly tokens: Array<{ t: string; v: string }>) {}
+  private readonly tokens: Array<{ t: string; v: string }>;
+  constructor(tokens: Array<{ t: string; v: string }>) {
+    this.tokens = tokens;
+  }
 
   private peek(): { t: string; v: string } {
     return this.tokens[this.pos];
