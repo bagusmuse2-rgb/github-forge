@@ -227,6 +227,13 @@ export class Forge {
     return { commit, blob };
   }
 
+  /** Register a label on a repo with the forge's next label id. */
+  makeLabel(repo: Repo, label: { name: string; color: string; description: string | null }): Label {
+    const created: Label = { id: ++this.nextLabelId, name: label.name, color: label.color, description: label.description };
+    repo.labels.set(created.name, created);
+    return created;
+  }
+
   createIssue(repo: Repo, init: { title: string; body?: string; labels?: string[] }): Issue {
     const sec = this.clock.nextSec();
     const issue: Issue = {
